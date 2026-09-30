@@ -252,7 +252,7 @@
  * 설정: Apps Script 웹 앱 주소(배포 > 배포 관리에서 복사, /exec 로 끝남)
  * 이 파일을 GitHub Pages 등에 올릴 때만 필요하다. Apps Script 화면 안에서는 비워 둬도 된다.
  * ══════════════════════════════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbz1e4W2IwSZshveoTTSrY0tf6rvDMFVSbWUEDStnxPjLD6dsqs6Mi7dbTs0mhcG2j5V/exec';
+const API_URL = 'https://script.google.com/a/macros/inchang.sen.hs.kr/s/AKfycbz1e4W2IwSZshveoTTSrY0tf6rvDMFVSbWUEDStnxPjLD6dsqs6Mi7dbTs0mhcG2j5V/exec';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
