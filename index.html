@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>대입 면접 연습</title>
+<style>
+  :root {
+    --ink:#1d2433; --quiet:#667085; --line:#d9dee7; --soft:#f3f5f8; --bg:#f6f7fb; --card:#fff;
+    --accent:#2f5fd0; --accent-soft:#e8eefc; --ok:#11805c; --ok-soft:#e3f4ec; --warn:#b54708; --warn-soft:#fdf0e1;
+    --bad:#c4320a; --bad-soft:#fde8e1; --rec:#d92d20;
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  body { margin:0; font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif; color:var(--ink); background:var(--bg); line-height:1.55; }
+  header { background:var(--card); border-bottom:1px solid var(--line); }
+  .bar { max-width:880px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .bar h1 { font-size:18px; margin:0; flex:1; }
+  .who { font-size:13px; color:var(--quiet); }
+  .who a, .who button { color:var(--accent); margin-left:8px; font-size:13px; }
+  .who button { border:none; background:none; padding:0; cursor:pointer; }
+  .check { display:flex; gap:8px; align-items:center; font-size:14px; color:var(--ink); margin-top:12px; }
+  .check input { width:auto; }
+  .login-box { max-width:420px; margin:24px auto; }
+  main { max-width:880px; margin:0 auto; padding:20px 16px 64px; }
+  .view { display:none; } .view.on { display:block; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
+  h2 { font-size:17px; margin:0 0 12px; } h3 { font-size:15px; margin:0 0 10px; }
+  .muted { color:var(--quiet); font-size:14px; }
+  label { display:block; font-size:13px; color:var(--quiet); margin:10px 0 4px; }
+  input, select, textarea { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; }
+  textarea { min-height:140px; resize:vertical; font-size:16px; line-height:1.6; }
+  button { font:inherit; cursor:pointer; border-radius:8px; padding:10px 16px; border:1px solid var(--line); background:#fff; color:var(--ink); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  button.ghost { border:none; background:none; color:var(--accent); padding:6px 0; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:640px){ .grid2 { grid-template-columns:1fr; } }
+
+  /* 질문 목록 */
+  .qcards { display:grid; gap:12px; }
+  .qcard { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; display:grid; grid-template-columns:52px 1fr auto; gap:14px; align-items:center; }
+  .qid { width:52px; height:52px; border-radius:12px; background:var(--accent-soft); color:var(--accent); font-weight:700; display:grid; place-items:center; }
+  .qtext { font-weight:600; }
+  .qmeta { font-size:13px; color:var(--quiet); margin-top:2px; }
+  .qbtns { display:flex; flex-direction:column; gap:6px; }
+  @media (max-width:640px){ .qcard { grid-template-columns:44px 1fr; } .qid{width:44px;height:44px;} .qbtns { grid-column:1/-1; flex-direction:row; } .qbtns button{flex:1;} }
+
+  /* 연습 화면 */
+  .badge { display:inline-block; font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--soft); color:var(--quiet); }
+  .badge.real { background:var(--bad-soft); color:var(--bad); }
+  .question-big { font-size:20px; font-weight:700; margin:10px 0 6px; }
+  details { background:var(--soft); border-radius:10px; padding:10px 14px; margin-top:10px; font-size:14px; }
+  details summary { cursor:pointer; font-weight:600; color:var(--accent); }
+  .rec-area { display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  #recBtn { width:104px; height:104px; border-radius:50%; border:none; background:var(--rec); color:#fff; font-size:16px; font-weight:700; flex:none; }
+  #recBtn.recording { background:#fff; color:var(--rec); border:5px solid var(--rec); animation:pulse 1.2s infinite; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 12px rgba(217,45,32,.14); } }
+  .rec-info { flex:1; min-width:220px; }
+  .timer { font-size:34px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .track { position:relative; height:12px; background:var(--soft); border-radius:6px; margin:8px 0 4px; overflow:hidden; }
+  .zone { position:absolute; top:0; bottom:0; background:var(--ok-soft); border-left:2px solid var(--ok); border-right:2px solid var(--ok); }
+  .fill { position:absolute; top:0; bottom:0; left:0; width:0; background:var(--accent); opacity:.75; }
+  .scale { display:flex; justify-content:space-between; font-size:12px; color:var(--quiet); }
+  .meter { height:8px; background:var(--soft); border-radius:4px; overflow:hidden; margin-top:10px; }
+  .meter > div { height:100%; width:0; background:var(--ok); transition:width .08s; }
+  .interim { color:var(--quiet); }
+  .methods { display:flex; flex-direction:column; }
+  .methods #mRecord { order:1; } .methods #mUpload { order:2; }
+  .methods.phone #mRecord { order:2; } .methods.phone #mUpload { order:1; }
+  .method-title { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+  .method-title .num { width:24px; height:24px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-size:13px; font-weight:700; display:grid; place-items:center; }
+  .steps { margin:0 0 12px; padding-left:20px; font-size:14px; color:var(--ink); }
+  .steps li { margin:2px 0; }
+  .upload-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:14px 20px; border-radius:10px; background:var(--accent); color:#fff; font-weight:700; cursor:pointer; font-size:15px; }
+  .upload-btn input { display:none; }
+  .rec-note { background:var(--warn-soft); color:var(--warn); border-radius:8px; padding:8px 12px; font-size:13px; margin-top:10px; display:none; }
+  .banner { background:var(--warn-soft); color:var(--ink); border-bottom:1px solid #f3d6b3; font-size:14px; }
+  .banner .in { max-width:880px; margin:0 auto; padding:10px 16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .banner a, .banner button { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:7px 12px; font-size:13px; font-weight:600; text-decoration:none; cursor:pointer; }
+  .live { margin-top:12px; min-height:48px; padding:10px 12px; border:1px dashed var(--line); border-radius:8px; font-size:14px; color:var(--quiet); white-space:pre-wrap; display:none; }
+  .mini { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:var(--quiet); margin:8px 0 4px; }
+  .overlay { position:fixed; inset:0; background:rgba(20,26,40,.72); display:none; place-items:center; z-index:10; color:#fff; text-align:center; }
+  .overlay.on { display:grid; }
+  .overlay .count { font-size:88px; font-weight:800; line-height:1; }
+  .spinner { width:36px; height:36px; border:4px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 16px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  audio { width:100%; margin-top:10px; }
+
+  /* 결과 */
+  .hero { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+  .score-ring { width:112px; height:112px; border-radius:50%; display:grid; place-items:center; flex:none; font-weight:800; font-size:30px; }
+  .score-ring small { display:block; font-size:12px; font-weight:500; color:var(--quiet); text-align:center; }
+  .summary { font-size:17px; font-weight:600; }
+  .tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media (max-width:640px){ .tiles { grid-template-columns:repeat(2,1fr); } }
+  .tile { background:var(--soft); border-radius:10px; padding:12px; }
+  .tile .k { font-size:12px; color:var(--quiet); } .tile .v { font-size:22px; font-weight:700; } .tile .n { font-size:12px; }
+  .rub { display:grid; grid-template-columns:120px 1fr 28px; gap:10px; align-items:center; margin:8px 0; font-size:14px; }
+  .rub .b { height:10px; background:var(--soft); border-radius:5px; overflow:hidden; }
+  .rub .b > div { height:100%; border-radius:5px; }
+  .ev { grid-column:2 / -1; font-size:13px; color:var(--quiet); margin-top:-4px; }
+  ul.clean { list-style:none; padding:0; margin:0; }
+  ul.clean li { padding:8px 0; border-bottom:1px solid var(--soft); font-size:14px; }
+  .chk { font-weight:700; margin-right:6px; }
+  .quote { background:var(--warn-soft); border-radius:4px; padding:0 4px; }
+  mark { background:#ffe58a; border-radius:3px; padding:0 2px; }
+  .transcript { font-size:15px; background:var(--soft); border-radius:10px; padding:12px 14px; white-space:pre-wrap; }
+  .model { font-size:15px; border-left:4px solid var(--accent); padding:6px 0 6px 14px; white-space:pre-wrap; }
+  .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+  table.hist { width:100%; border-collapse:collapse; font-size:14px; }
+  table.hist th, table.hist td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--soft); }
+  table.hist tr.click { cursor:pointer; } table.hist tr.click:hover { background:var(--soft); }
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 16px; border-radius:10px; font-size:14px; display:none; z-index:20; max-width:90%; }
+  .comment { background:var(--accent-soft); border-radius:10px; padding:10px 14px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="banner" id="banner" style="display:none"><div class="in" id="bannerIn"></div></div>
+<header>
+  <div class="bar">
+    <h1>대입 면접 연습</h1>
+    <div class="who" id="who">불러오는 중…</div>
+  </div>
+</header>
+
+<main>
+  <!-- 불러오기 -->
+  <section class="view on" id="v-loading"><div class="card muted">정보를 불러오는 중이다…</div></section>
+
+  <!-- 학번 + PIN 로그인 -->
+  <section class="view" id="v-login">
+    <div class="card login-box">
+      <h2>로그인</h2>
+      <p class="muted">처음 등록할 때 정한 학번과 PIN을 입력한다.</p>
+      <label>학번</label><input id="lSid" inputmode="numeric" placeholder="예: 30215" autocomplete="off">
+      <label>PIN(숫자 4~6자리)</label><input id="lPin" type="password" inputmode="numeric" autocomplete="off">
+      <label class="check"><input type="checkbox" id="lKeep"> 이 기기에서 로그인 유지(개인 기기에서만)</label>
+      <div class="row" style="margin-top:16px"><button class="primary" id="lGo">로그인</button><button id="lNew">처음 등록</button></div>
+      <div id="lMsg" class="muted" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- 학생 등록 -->
+  <section class="view" id="v-register">
+    <div class="card">
+      <h2 id="rTitle">처음 오셨다면 정보를 등록한다</h2>
+      <p class="muted">학번과 지원 학과는 피드백에서 "지원 분야와의 연결"을 판단하는 데 쓰인다. 이름·학번은 AI에 보내지 않는다.</p>
+      <div class="grid2">
+        <div><label>학번(숫자)</label><input id="rSid" inputmode="numeric" placeholder="예: 30215"></div>
+        <div><label>이름</label><input id="rName"></div>
+        <div><label>반</label><input id="rCls" placeholder="예: 3-2"></div>
+        <div><label>지원 학과(계열)</label><input id="rMajor" placeholder="예: 화학공학과"></div>
+      </div>
+      <div id="pinFields" class="grid2" style="display:none">
+        <div><label>PIN 정하기(숫자 4~6자리)</label><input id="rPin" type="password" inputmode="numeric" autocomplete="off"></div>
+        <div><label>PIN 다시 입력</label><input id="rPin2" type="password" inputmode="numeric" autocomplete="off"></div>
+        <div id="codeWrap" style="display:none"><label>접속 코드(선생님께 받은 코드)</label><input id="rCode" autocomplete="off"></div>
+      </div>
+      <p id="pinNote" class="muted" style="display:none;margin-top:8px">다음부터는 학번과 PIN으로 로그인한다. PIN을 잊으면 선생님께 초기화를 요청한다.</p>
+      <label id="rKeepWrap" class="check" style="display:none"><input type="checkbox" id="rKeep"> 이 기기에서 로그인 유지(개인 기기에서만)</label>
+      <div class="row" style="margin-top:16px"><button class="primary" id="rSave">저장하고 시작하기</button><button id="rCancel" style="display:none">취소</button><button id="rToLogin" style="display:none">이미 등록했다면 로그인</button></div>
+    </div>
+  </section>
+
+  <!-- 질문 목록 -->
+  <section class="view" id="v-home">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><h2 style="margin:0">기본 질문 5개</h2><div class="muted" id="homeInfo"></div></div>
+        <button class="ghost" id="editInfo">내 정보 수정</button>
+      </div>
+      <p class="muted" style="margin:10px 0 0">연습 모드는 힌트를 보고 여러 번 다시 녹음할 수 있다. 실전 모드는 준비 시간 뒤 자동으로 녹음이 시작되고 다시 녹음할 수 없다.</p>
+    </div>
+    <div class="qcards" id="qcards"></div>
+    <div class="card" style="margin-top:16px">
+      <h3>내 연습 기록</h3>
+      <div id="histBox" class="muted">아직 기록이 없다.</div>
+    </div>
+  </section>
+
+  <!-- 연습 -->
+  <section class="view" id="v-practice">
+    <button class="ghost" id="pBack">← 질문 목록</button>
+    <div class="card">
+      <span class="badge" id="pMode">연습 모드</span> <span class="badge" id="pRound"></span>
+      <div class="question-big" id="pQuestion"></div>
+      <details id="pHint"><summary>힌트 보기 (출제 의도·대응 포인트)</summary><p id="pIntent"></p><p id="pTips"></p></details>
+    </div>
+
+    <div class="methods" id="methods">
+      <div class="card" id="mUpload">
+        <div class="method-title"><span class="num" id="numUpload">1</span><h3 style="margin:0">녹음 파일 올리기 <span class="muted" id="tagUpload">휴대폰 권장</span></h3></div>
+        <ol class="steps">
+          <li>휴대폰 기본 <b>녹음 앱</b>(음성 메모)을 연다.</li>
+          <li>위 질문에 실제 면접처럼 소리 내어 답하고 저장한다. <span class="muted" id="upLimit"></span></li>
+          <li>아래 버튼을 눌러 방금 녹음한 파일을 고른다.</li>
+        </ol>
+        <label class="upload-btn">녹음 파일 선택<input type="file" id="fileInput" accept="audio/*,audio/mp4,audio/x-m4a,audio/m4a,.m4a,.mp4,.mp3,.wav,.webm,.ogg"></label>
+        <div class="muted" id="fileName" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card" id="mRecord">
+        <div class="method-title"><span class="num" id="numRecord">2</span><h3 style="margin:0">여기서 바로 녹음 <span class="muted" id="tagRecord">컴퓨터·크롬북 권장</span></h3></div>
+        <div class="rec-area">
+          <button id="recBtn">녹음</button>
+          <div class="rec-info">
+            <div class="timer" id="timer">00:00</div>
+            <div class="track"><div class="zone" id="zone"></div><div class="fill" id="fill"></div></div>
+            <div class="scale"><span>0초</span><span id="zoneLabel"></span><span id="scaleMax"></span></div>
+            <div class="meter"><div id="level"></div></div>
+            <div class="muted" id="recHint" style="margin-top:6px">버튼을 누르고 실제 면접처럼 소리 내어 답한다.</div>
+          </div>
+        </div>
+        <div class="live" id="livePreview"></div>
+        <div class="rec-note" id="recNote"></div>
+      </div>
+    </div>
+
+    <div class="card" id="reviewCard" style="display:none">
+      <h3>제출 전 확인</h3>
+      <audio id="player" controls></audio>
+      <div class="mini" id="miniMetrics"></div>
+      <label id="editLabel">음성 인식이 잘못 받아 적은 단어만 고친다. 내용을 새로 쓰지 않는다.</label>
+      <textarea id="editText"></textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="primary" id="submitBtn">제출하고 피드백 받기</button>
+        <button id="retryBtn">다시 녹음</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 결과 -->
+  <section class="view" id="v-result">
+    <button class="ghost" id="resBack">← 질문 목록</button>
+    <div id="resBody"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="primary" id="resAgain">같은 질문 다시 연습</button>
+      <button id="resHome">다른 질문 고르기</button>
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="prep"><div><div>곧 녹음이 시작된다</div><div class="count" id="prepCount">10</div><div id="prepQ" style="max-width:520px;margin-top:12px;font-size:18px"></div></div></div>
+<div class="overlay" id="busy"><div><div class="spinner"></div><div id="busyText">피드백을 만드는 중이다. 20~40초쯤 걸린다.</div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+ * 설정: Apps Script 웹 앱 주소(배포 > 배포 관리에서 복사, /exec 로 끝남)
+ * 이 파일을 GitHub Pages 등에 올릴 때만 필요하다. Apps Script 화면 안에서는 비워 둬도 된다.
+ * ══════════════════════════════════════════════════════════════ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbz1e4W2IwSZshveoTTSrY0tf6rvDMFVSbWUEDStnxPjLD6dsqs6Mi7dbTs0mhcG2j5V/exec';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const UA = navigator.userAgent;
+const IS_PHONE = /Android|iPhone|iPad|iPod|Mobile/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA));
+const IS_ANDROID = /Android/i.test(UA);
+const IN_GAS = !!(window.google && google.script && google.script.run);          // Apps Script 화면 안인지
+const IN_APP = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(UA);  // 앱 안 브라우저
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const API_READY = /^https:\/\/script\.google\.com\/.+\/exec$/.test(API_URL) && API_URL.indexOf('여기에') < 0;
+const RUBRIC = [['intent','질문 의도 부합'],['structure','구조·논리'],['specificity','구체성'],['major_fit','지원 분야 연결'],['delivery','전달력']];
+
+let APP = null;          // 서버 초기 데이터
+let HISTORY = [];        // 내 기록
+let cur = { q:null, mode:'practice' };
+let rec = null;          // 녹음 상태
+let lastResult = null;
+
+/* ───── 로그인 정보(학번 + PIN) ─────
+ * Google 계정 이메일이 확인되지 않는 환경에서만 쓴다.
+ * "로그인 유지"를 고르면 이 기기 브라우저에 저장하고, 아니면 이 창을 닫을 때까지만 기억한다. */
+const AUTH_KEY = 'interviewAuth_v1';
+let AUTH = null;
+try { AUTH = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch (_) { AUTH = null; }
+function isKept() { try { return !!localStorage.getItem(AUTH_KEY); } catch (_) { return false; } }
+function setAuth(a, keep) {
+  AUTH = a;
+  try { if (a && keep) localStorage.setItem(AUTH_KEY, JSON.stringify(a)); else localStorage.removeItem(AUTH_KEY); } catch (_) {}
+}
+
+/* ───── 공통 ───── */
+function show(id) { document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === id)); window.scrollTo(0, 0); }
+function toast(msg, ms) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms || 3500); }
+/** 서버 호출. Apps Script 화면 안에서는 google.script.run, 밖(GitHub Pages 등)에서는 웹 앱 주소로 fetch 한다. */
+function call(fn, ...args) {
+  const onError = msg => {
+    if (msg.indexOf('로그인이 필요하다') >= 0 && APP && APP.loginMode === 'pin') { setAuth(null); goLogin('로그인이 끝났다. 다시 로그인한다.'); }
+    return new Error(msg);
+  };
+  if (IN_GAS) {
+    return new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(resolve)
+        .withFailureHandler(err => reject(onError((err && err.message) || String(err))))[fn](...args);
+    });
+  }
+  if (!API_READY) return Promise.reject(new Error('index.html 맨 위 API_URL 에 Apps Script 웹 앱 주소(/exec)를 넣어야 한다.'));
+  // text/plain 으로 보내야 브라우저가 사전 요청(CORS preflight) 없이 바로 보낸다.
+  return fetch(API_URL, { method:'POST', redirect:'follow', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body:JSON.stringify({ action:fn, args }) })
+    .then(r => { if (!r.ok) throw new Error('서버 응답 오류 ' + r.status); return r.text(); })
+    .then(t => {
+      let j; try { j = JSON.parse(t); } catch (_) { throw new Error('서버 응답을 읽지 못했다. 웹 앱 액세스 권한이 "모든 사용자"인지 확인한다.'); }
+      if (!j.ok) throw onError(j.error || '알 수 없는 오류');
+      return j.data;
+    }, err => { throw err instanceof Error && /서버|권한|로그인/.test(err.message) ? err : new Error('인터넷 연결을 확인하고 다시 시도한다.'); });
+}
+function fmt(sec) { const s = Math.max(0, Math.floor(sec)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+function scoreColor(v) { return v >= 4 ? 'var(--ok)' : v >= 3 ? 'var(--accent)' : v >= 2 ? 'var(--warn)' : 'var(--bad)'; }
+function scoreSoft(v) { return v >= 4 ? 'var(--ok-soft)' : v >= 3 ? 'var(--accent-soft)' : v >= 2 ? 'var(--warn-soft)' : 'var(--bad-soft)'; }
+
+/* ───── 안내 띠 ───── */
+function showBanner(html) { $('bannerIn').innerHTML = html; $('banner').style.display = ''; }
+function externalOpenUrl() {
+  const url = location.href;
+  if (/KAKAOTALK/i.test(UA)) return 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+  if (IS_ANDROID) return 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+  return '';
+}
+function setupBanners() {
+  if (IN_APP && !IN_GAS) {
+    const link = externalOpenUrl();
+    showBanner('카카오톡 같은 앱 안에서는 녹음이 막힐 수 있다. ' +
+      (link ? `<a href="${esc(link)}">${IS_ANDROID ? 'Chrome' : 'Safari'}로 열기</a>` : '<b>오른쪽 아래 ⋯ → 다른 브라우저로 열기</b>를 누른다.'));
+  } else if (IN_GAS && IS_PHONE && APP && APP.studentUrl) {
+    showBanner(`휴대폰에서는 이 주소로 열어야 바로 녹음이 된다. <a href="${esc(APP.studentUrl)}" target="_top">휴대폰용 주소로 열기</a>`);
+  }
+}
+
+/* ───── 시작 ───── */
+async function init() {
+  setupBanners();
+  try {
+    APP = await call('getInitData', AUTH);
+  } catch (e) {
+    $('v-loading').innerHTML = `<div class="card bad">${esc(e.message || e)}<div class="muted" style="margin-top:8px">잠시 후 새로고침한다. 계속되면 선생님께 알린다.</div></div>`; return;
+  }
+  setupBanners();
+  await enter();
+}
+
+/** 초기 데이터에 따라 로그인 → 등록 → 질문 목록 순서로 보낸다. */
+async function enter() {
+  renderWho();
+  if (APP.loginMode === 'pin' && APP.needLogin) {
+    if (AUTH) setAuth(null);
+    goLogin(''); return;
+  }
+  if (!APP.student) { openRegister(false); return; }
+  await loadHistory();
+  renderHome(); show('v-home');
+}
+
+function renderWho() {
+  const s = APP && APP.student;
+  let html = s ? esc(`${s.sid} ${s.name}`) : (APP && APP.email ? esc(APP.email) : '');
+  if (APP && APP.isTeacher && APP.teacherUrl) html += `<a href="${esc(APP.teacherUrl)}">교사 대시보드</a>`;
+  if (APP && APP.loginMode === 'pin' && s) html += '<button id="logout">로그아웃</button>';
+  $('who').innerHTML = html;
+  const lo = $('logout');
+  if (lo) lo.onclick = () => { setAuth(null); APP.student = null; APP.needLogin = true; HISTORY = []; renderWho(); goLogin('로그아웃했다.'); };
+}
+
+/* ───── 로그인(학번 + PIN) ───── */
+function goLogin(msg) {
+  $('lMsg').textContent = msg || '';
+  $('lPin').value = '';
+  show('v-login');
+}
+$('lGo').onclick = async () => {
+  const auth = { sid:$('lSid').value.replace(/\s/g, ''), pin:$('lPin').value.trim() };
+  if (!auth.sid || !auth.pin) { $('lMsg').textContent = '학번과 PIN을 모두 입력한다.'; return; }
+  $('lGo').disabled = true; $('lMsg').textContent = '확인 중…';
+  try {
+    const res = await call('loginStudent', auth);
+    if (!res.ok) { $('lMsg').innerHTML = `<span class="bad">${esc(res.message)}</span>`; return; }
+    setAuth(auth, $('lKeep').checked);
+    APP = res.init;
+    await enter();
+  } catch (e) { $('lMsg').innerHTML = `<span class="bad">${esc(e.message)}</span>`; }
+  finally { $('lGo').disabled = false; }
+};
+$('lPin').onkeydown = e => { if (e.key === 'Enter') $('lGo').click(); };
+$('lNew').onclick = () => openRegister(false);
+$('rToLogin').onclick = () => goLogin('');
+
+/* ───── 등록 ───── */
+function openRegister(editing) {
+  const pinMode = APP.loginMode === 'pin';
+  const newPin = pinMode && !editing;
+  $('rTitle').textContent = editing ? '내 정보 수정' : '처음 오셨다면 정보를 등록한다';
+  $('pinFields').style.display = newPin ? '' : 'none';
+  $('pinNote').style.display = newPin ? '' : 'none';
+  $('rKeepWrap').style.display = newPin ? '' : 'none';
+  $('codeWrap').style.display = newPin && APP.accessCodeRequired ? '' : 'none';
+  $('rToLogin').style.display = newPin ? '' : 'none';
+  $('rCancel').style.display = editing ? '' : 'none';
+  $('rSid').readOnly = editing && pinMode;
+  if (editing) {
+    const s = APP.student; $('rSid').value = s.sid; $('rName').value = s.name; $('rCls').value = s.cls; $('rMajor').value = s.major;
+  } else if (newPin) {
+    $('rSid').value = $('lSid').value || $('rSid').value;
+  }
+  $('rPin').value = ''; $('rPin2').value = '';
+  show('v-register');
+}
+
+/* ───── 등록 ───── */
+$('rSave').onclick = async () => {
+  const newPin = $('pinFields').style.display !== 'none';
+  const info = { sid:$('rSid').value.replace(/\s/g, ''), name:$('rName').value, cls:$('rCls').value, major:$('rMajor').value,
+                 pin:$('rPin').value.trim(), code:$('rCode').value };
+  if (newPin && info.pin !== $('rPin2').value.trim()) { toast('두 PIN이 서로 다르다.'); return; }
+  $('rSave').disabled = true;
+  try {
+    const res = await call('registerStudent', info, AUTH);
+    if (res.auth) setAuth(res.auth, newPin ? $('rKeep').checked : isKept());
+    APP = await call('getInitData', AUTH);
+    await enter();
+    toast('저장했다.');
+  } catch (e) { toast(e.message || String(e), 5000); }
+  $('rSave').disabled = false;
+};
+$('editInfo').onclick = () => openRegister(true);
+$('rCancel').onclick = () => show('v-home');
+
+/* ───── 질문 목록 ───── */
+async function loadHistory() {
+  try { HISTORY = await call('getMyHistory', AUTH, null); } catch (e) { HISTORY = []; }
+  APP.summary = {};
+  HISTORY.slice().reverse().forEach(r => {
+    const s = APP.summary[r.qid] || (APP.summary[r.qid] = { count:0, best:0, last:0 });
+    s.count++; s.best = Math.max(s.best, r.avg); s.last = r.avg;
+  });
+}
+
+function renderHome() {
+  const s = APP.student;
+  $('homeInfo').textContent = `${s.cls ? s.cls + ' · ' : ''}지원: ${s.major}`;
+  $('qcards').innerHTML = APP.questions.map(q => {
+    const sm = APP.summary[q.qid];
+    const meta = sm ? `연습 ${sm.count}회 · 최근 ${sm.last.toFixed(1)}점 · 최고 ${sm.best.toFixed(1)}점` : '아직 연습하지 않았다';
+    return `<div class="qcard"><div class="qid">${esc(q.qid)}</div>
+      <div><div class="qtext">${esc(q.text)}</div><div class="qmeta">권장 ${q.minSec}~${q.maxSec}초 · ${meta}</div></div>
+      <div class="qbtns"><button class="primary" data-q="${esc(q.qid)}" data-m="practice">연습</button><button data-q="${esc(q.qid)}" data-m="real">실전</button></div></div>`;
+  }).join('');
+  $('qcards').querySelectorAll('button').forEach(b => b.onclick = () => openPractice(b.dataset.q, b.dataset.m));
+
+  if (!HISTORY.length) { $('histBox').innerHTML = '<span class="muted">아직 기록이 없다.</span>'; return; }
+  $('histBox').innerHTML = `<table class="hist"><thead><tr><th>제출 시각</th><th>질문</th><th>회차</th><th>모드</th><th>평균</th><th>총평</th></tr></thead><tbody>${
+    HISTORY.slice(0, 30).map((r, i) => `<tr class="click" data-i="${i}"><td>${esc(r.time)}</td><td>${esc(r.qid)}</td><td>${r.round}</td><td>${esc(r.mode)}</td>
+      <td style="color:${scoreColor(r.avg)};font-weight:700">${r.avg ? r.avg.toFixed(1) : '-'}</td><td>${esc(r.summary || r.status)}${r.comment ? ' <span class="badge">선생님 코멘트</span>' : ''}</td></tr>`).join('')
+  }</tbody></table>`;
+  $('histBox').querySelectorAll('tr.click').forEach(tr => tr.onclick = () => {
+    const r = HISTORY[Number(tr.dataset.i)];
+    if (!r.feedback) { toast('피드백이 없는 기록이다.'); return; }
+    cur.q = APP.questions.find(q => q.qid === r.qid) || { qid:r.qid, text:'', minSec:0, maxSec:0 };
+    cur.mode = r.mode === '실전' ? 'real' : 'practice';
+    renderResult({ id:r.id, round:r.round, avg:r.avg, scores:r.scores, feedback:r.feedback, metrics:r.metrics, transcript:r.transcript, comment:r.comment, hasAudio:r.hasAudio });
+  });
+}
+
+/* ───── 연습 화면 ───── */
+function openPractice(qid, mode) {
+  const q = APP.questions.find(x => x.qid === qid);
+  cur = { q, mode, busy:false };
+  const sm = APP.summary[qid];
+  $('pMode').textContent = mode === 'real' ? '실전 모드' : '연습 모드';
+  $('pMode').className = 'badge' + (mode === 'real' ? ' real' : '');
+  $('pRound').textContent = `${(sm ? sm.count : 0) + 1}회차`;
+  $('pQuestion').textContent = `${q.qid}. ${q.text}`;
+  $('pIntent').innerHTML = `<b>출제 의도</b> ${esc(q.intent)}`;
+  $('pTips').innerHTML = `<b>대응 포인트</b> ${esc(q.tips)}`;
+  $('pHint').style.display = mode === 'real' ? 'none' : ''; $('pHint').open = false;
+  $('retryBtn').style.display = mode === 'real' ? 'none' : '';
+  $('editText').readOnly = mode === 'real';
+  $('editLabel').textContent = mode === 'real' ? '실전 모드에서는 인식된 글을 그대로 제출한다.' : '음성 인식이 잘못 받아 적은 단어만 고친다. 내용을 새로 쓰지 않는다.';
+  $('upLimit').textContent = `(권장 ${q.minSec}~${q.maxSec}초, 최대 ${Math.round(APP.settings.maxRecordSec / 60)}분)`;
+  const uploadFirst = IS_PHONE && IN_GAS;          // Apps Script 화면 안의 휴대폰은 마이크가 막히므로 업로드를 먼저
+  $('methods').classList.toggle('phone', uploadFirst);
+  $('numUpload').textContent = uploadFirst ? '1' : '2';
+  $('numRecord').textContent = uploadFirst ? '2' : '1';
+  $('tagUpload').textContent = uploadFirst ? '휴대폰 권장' : '';
+  $('tagRecord').textContent = uploadFirst ? '컴퓨터·크롬북 권장' : '';
+  resetRecorderUI();
+  const scaleMax = Math.max(q.maxSec * 1.5, 60);
+  $('zone').style.left = (q.minSec / scaleMax * 100) + '%';
+  $('zone').style.width = ((q.maxSec - q.minSec) / scaleMax * 100) + '%';
+  $('zoneLabel').textContent = `권장 ${q.minSec}~${q.maxSec}초`;
+  $('scaleMax').textContent = `${Math.round(scaleMax)}초`;
+  cur.scaleMax = scaleMax;
+  show('v-practice');
+  // 실전 모드: 컴퓨터에서는 준비 시간 뒤 자동 녹음, 휴대폰에서는 녹음 앱으로 녹음한 파일을 올린다.
+  if (mode === 'real' && !(IS_PHONE && IN_GAS)) startPrep();
+}
+
+function resetRecorderUI() {
+  $('timer').textContent = '00:00'; $('timer').className = 'timer'; $('fill').style.width = '0'; $('level').style.width = '0';
+  $('recBtn').disabled = false; $('recBtn').classList.remove('recording'); $('recBtn').textContent = '녹음';
+  $('recBtn').style.display = '';
+  $('recNote').style.display = 'none';
+  $('livePreview').style.display = 'none'; $('livePreview').textContent = '';
+  $('reviewCard').style.display = 'none';
+  $('methods').style.display = '';
+  $('fileInput').value = ''; $('fileName').textContent = '';
+  $('recHint').textContent = '버튼을 누르고 실제 면접처럼 소리 내어 답한다.';
+  if (cur) cur.uploadId = null;
+}
+
+function startPrep() {
+  let n = APP.settings.prepSec;
+  $('prepQ').textContent = cur.q.text; $('prepCount').textContent = n; $('prep').classList.add('on');
+  $('recBtn').style.display = 'none';
+  const h = setInterval(() => {
+    n--; $('prepCount').textContent = n;
+    if (n <= 0) { clearInterval(h); $('prep').classList.remove('on'); $('recBtn').style.display = ''; startRecording(); }
+  }, 1000);
+}
+
+$('pBack').onclick = () => { if (rec && rec.recording) stopRecording(true); renderHome(); show('v-home'); };
+$('recBtn').onclick = () => (rec && rec.recording) ? stopRecording(false) : startRecording();
+$('retryBtn').onclick = () => resetRecorderUI();
+
+/* ───── 방법 1: 녹음 파일 올리기 ───── */
+$('fileInput').onchange = () => {
+  const f = $('fileInput').files[0];
+  if (!f) return;
+  $('fileName').textContent = `${f.name} · ${(f.size / 1024 / 1024).toFixed(1)}MB`;
+  handleAudio(f, f.name);
+};
+
+/* ───── 방법 2: 브라우저에서 바로 녹음 ───── */
+function showRecNote(msg) { $('recNote').innerHTML = msg; $('recNote').style.display = 'block'; }
+
+async function startRecording() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+    showRecNote('이 브라우저에서는 바로 녹음을 할 수 없다. <b>녹음 파일 올리기</b>를 이용한다.'); return;
+  }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true } }); }
+  catch (e) {
+    showRecNote(`마이크를 열지 못했다(${esc(e.name)}). 휴대폰이나 카카오톡 안에서 열면 자주 생기는 일이다. 휴대폰 녹음 앱으로 녹음한 뒤 <b>녹음 파일 올리기</b>를 이용한다.`);
+    return;
+  }
+  const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+  const recorder = new MediaRecorder(stream, mime ? { mimeType:mime } : undefined);
+  const st = rec = { stream, recorder, chunks:[], recording:true, startAt:Date.now() };
+  recorder.ondataavailable = e => { if (e.data.size) st.chunks.push(e.data); };
+  recorder.start(1000);
+
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const an = ctx.createAnalyser(); an.fftSize = 1024;
+    ctx.createMediaStreamSource(stream).connect(an);
+    st.ctx = ctx; st.an = an; st.buf = new Uint8Array(an.fftSize);
+  } catch (_) { /* 음량 표시는 없어도 된다 */ }
+
+  if (SR && !IS_PHONE) startLiveCaption(st);
+
+  const tick = () => {
+    if (!st.recording) return;
+    if (st.an) {
+      st.an.getByteTimeDomainData(st.buf);
+      let sum = 0; for (const v of st.buf) sum += ((v - 128) / 128) ** 2;
+      $('level').style.width = Math.min(100, Math.sqrt(sum / st.buf.length) * 500) + '%';
+    }
+    const sec = (Date.now() - st.startAt) / 1000;
+    $('timer').textContent = fmt(sec);
+    $('fill').style.width = Math.min(100, sec / cur.scaleMax * 100) + '%';
+    $('timer').className = 'timer ' + (sec > cur.q.maxSec ? 'bad' : sec >= cur.q.minSec ? 'ok' : '');
+    if (sec >= APP.settings.maxRecordSec) { stopRecording(false); return; }
+    st.raf = requestAnimationFrame(tick);
+  };
+  tick();
+  $('recBtn').classList.add('recording'); $('recBtn').textContent = '정지';
+  $('recHint').textContent = '답을 마치면 정지 버튼을 누른다.';
+}
+
+/** 실시간 자막 미리보기. 제출에는 쓰지 않고, 정확한 글은 Whisper가 만든다. */
+function startLiveCaption(st) {
+  try {
+    const r = new SR();
+    r.lang = 'ko-KR'; r.continuous = true; r.interimResults = true;
+    let done = '';
+    r.onresult = e => {
+      let fin = '', mid = '';
+      for (const x of e.results) { if (x.isFinal) fin += x[0].transcript + ' '; else mid += x[0].transcript; }
+      $('livePreview').textContent = (done + fin + mid).trim() || '듣고 있다…';
+      r._fin = fin;
+    };
+    r.onend = () => { done += r._fin || ''; r._fin = ''; if (st.recording) { try { r.start(); } catch (_) {} } };
+    r.onerror = () => {};
+    r.start();
+    st.sr = r;
+    $('livePreview').style.display = 'block';
+    $('livePreview').textContent = '듣고 있다… (자막은 미리보기이며, 제출할 글은 녹음을 다시 분석해 만든다)';
+  } catch (_) { /* 자막이 없어도 녹음은 된다 */ }
+}
+
+async function stopRecording(discard) {
+  if (!rec || !rec.recording) return;
+  const st = rec;
+  st.recording = false;
+  cancelAnimationFrame(st.raf);
+  if (st.sr) { try { st.sr.onend = null; st.sr.stop(); } catch (_) {} }
+  const done = new Promise(res => { st.recorder.onstop = res; });
+  st.recorder.stop();
+  await done;
+  st.stream.getTracks().forEach(t => t.stop());
+  try { st.ctx && st.ctx.close(); } catch (_) {}
+  $('recBtn').classList.remove('recording'); $('recBtn').textContent = '녹음'; $('level').style.width = '0';
+  rec = null;
+  if (discard) return;
+  const type = st.recorder.mimeType || 'audio/webm';
+  const blob = new Blob(st.chunks, { type });
+  handleAudio(blob, 'recording.' + (type.indexOf('mp4') >= 0 ? 'm4a' : 'webm'));
+}
+
+/* ───── 공통: 음성 → 글(Whisper) → 확인 → 제출 ───── */
+function blobToB64(blob) {
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = rej; fr.readAsDataURL(blob); });
+}
+
+function busy(on, text) {
+  $('busyText').textContent = text || '';
+  $('busy').classList.toggle('on', !!on);
+}
+
+async function handleAudio(blob, name) {
+  if (cur.busy) return;
+  const maxMB = APP.settings.maxUploadMB || 20;
+  if (blob.size > maxMB * 1024 * 1024) { toast(`파일이 ${maxMB}MB보다 크다. 3분 이내로 녹음한다.`, 5000); $('fileInput').value = ''; return; }
+  if (blob.size < 2000) { toast('녹음이 너무 짧다. 다시 녹음한다.'); return; }
+  cur.busy = true;
+  busy(true, '음성을 글로 바꾸는 중이다. 10~30초쯤 걸린다.');
+  try {
+    const audioB64 = await blobToB64(blob);
+    const res = await call('transcribeAudio', AUTH, { qid:cur.q.qid, audioB64, mimeType:blob.type, fileName:name });
+    cur.uploadId = res.uploadId;
+    cur.transcript = res.transcript;
+    cur.metrics = res.metrics;
+    $('player').src = URL.createObjectURL(blob);
+    $('editText').value = res.transcript;
+    const m = res.metrics;
+    $('miniMetrics').innerHTML = `<span>답변 시간 <b>${fmt(m.seconds)}</b></span><span>말 속도 <b>분당 ${m.spm}음절</b></span>` +
+      `<span>긴 침묵 <b>${m.longSilences === '' ? '측정 안 됨' : m.longSilences + '회'}</b></span>`;
+    $('methods').style.display = 'none';
+    $('reviewCard').style.display = '';
+    busy(false);
+    cur.busy = false;
+    if (cur.mode === 'real') { submitNow(); return; }
+    $('reviewCard').scrollIntoView({ behavior:'smooth', block:'start' });
+  } catch (e) {
+    busy(false); cur.busy = false;
+    $('fileInput').value = '';
+    toast(e.message || String(e), 7000);
+  }
+}
+
+async function submitNow() {
+  if (!cur.uploadId || cur.busy) return;
+  const edited = $('editText').value.trim();
+  if (cur.mode !== 'real' && edited.replace(/\s/g, '').length < 15) { toast('답변이 너무 짧다. 다시 녹음해 본다.'); return; }
+  cur.busy = true; $('submitBtn').disabled = true;
+  busy(true, '피드백을 만드는 중이다. 20~40초쯤 걸린다.');
+  try {
+    const res = await call('submitAnswer', AUTH, { qid:cur.q.qid, mode:cur.mode, uploadId:cur.uploadId, editedTranscript: edited === cur.transcript ? '' : edited });
+    await loadHistory();
+    renderResult(res);
+  } catch (e) {
+    toast(e.message || String(e), 7000);
+    if (/만료|다시 올린다/.test(e.message || '')) resetRecorderUI();
+  } finally {
+    busy(false); cur.busy = false; $('submitBtn').disabled = false;
+  }
+}
+$('submitBtn').onclick = submitNow;
+
+/* ───── 결과 대시보드 ───── */
+function renderResult(res) {
+  lastResult = res;
+  const fb = res.feedback, m = res.metrics, q = cur.q;
+  const timeState = m.seconds < q.minSec ? ['warn', '짧다'] : m.seconds > q.maxSec ? ['bad', '길다'] : ['ok', '적절'];
+
+  let transcriptHtml = esc(res.transcript || '');
+  (fb.improvements || []).forEach(x => {
+    const qt = esc(x.quote || '').trim();
+    if (qt.length >= 2 && transcriptHtml.indexOf(qt) >= 0) transcriptHtml = transcriptHtml.replace(qt, `<mark>${qt}</mark>`);
+  });
+
+  const trend = HISTORY.filter(r => r.qid === q.qid && r.avg).slice().reverse();
+
+  $('resBody').innerHTML = `
+    <div class="card">
+      <div class="muted">${esc(q.qid)} · ${res.round}회차 · ${cur.mode === 'real' ? '실전' : '연습'}</div>
+      <div style="font-weight:600;margin:4px 0 14px">${esc(q.text)}</div>
+      <div class="hero">
+        <div class="score-ring" style="background:${scoreSoft(res.avg)};color:${scoreColor(res.avg)}"><div>${Number(res.avg).toFixed(1)}<small>5점 만점</small></div></div>
+        <div style="flex:1;min-width:220px">
+          <div class="summary">${esc(fb.summary)}</div>
+          ${fb.progress_note ? `<div class="muted" style="margin-top:6px">지난 회차 대비: ${esc(fb.progress_note)}</div>` : ''}
+        </div>
+      </div>
+    </div>
+
+    ${res.comment ? `<div class="card"><h3>선생님 코멘트</h3><div class="comment">${esc(res.comment)}</div></div>` : ''}
+
+    <div class="card">
+      <h3>말하기 지표</h3>
+      <div class="tiles">
+        <div class="tile"><div class="k">답변 시간</div><div class="v">${fmt(m.seconds)}</div><div class="n ${timeState[0]}">권장 ${q.minSec}~${q.maxSec}초 · ${timeState[1]}</div></div>
+        <div class="tile"><div class="k">말 속도</div><div class="v">${m.spm}</div><div class="n muted">분당 음절 수</div></div>
+        <div class="tile"><div class="k">군말</div><div class="v">${m.fillerCount}회</div><div class="n muted">${esc(m.fillerDetail || '인식된 군말 없음')}</div></div>
+        <div class="tile"><div class="k">긴 침묵</div><div class="v">${m.longSilences === '' ? '-' : m.longSilences + '회'}</div><div class="n muted">${APP.settings.silenceSec}초 이상 멈춤</div></div>
+      </div>
+      <div class="muted" style="margin-top:8px;font-size:12px">음성 인식은 "어, 음" 같은 군말을 빠뜨리기도 하므로 군말 수는 참고용이다.</div>
+    </div>
+
+    <div class="card">
+      <h3>내용 평가</h3>
+      ${RUBRIC.map(([k, label]) => { const s = fb.scores[k] || { score:0, evidence:'' }; return `
+        <div class="rub"><div>${label}</div><div class="b"><div style="width:${s.score * 20}%;background:${scoreColor(s.score)}"></div></div><div style="font-weight:700;color:${scoreColor(s.score)}">${s.score}</div>
+        <div class="ev">${esc(s.evidence)}</div></div>`; }).join('')}
+    </div>
+
+    <div class="grid2">
+      <div class="card"><h3>체크포인트</h3><ul class="clean">${(fb.checkpoints || []).map(c =>
+        `<li><span class="chk ${c.met ? 'ok' : 'warn'}">${c.met ? '✓' : '△'}</span><b>${esc(c.item)}</b><div class="muted">${esc(c.comment)}</div></li>`).join('')}</ul></div>
+      <div class="card"><h3>잘한 점</h3><ul class="clean">${(fb.strengths || []).map(s => `<li>👍 ${esc(s)}</li>`).join('')}</ul>
+        <h3 style="margin-top:16px">고칠 점</h3><ul class="clean">${(fb.improvements || []).map(x =>
+          `<li><span class="quote">"${esc(x.quote)}"</span><div>→ ${esc(x.suggestion)}</div></li>`).join('')}</ul></div>
+    </div>
+
+    <div class="card">
+      <h3>내 답변 전사문</h3>
+      <div class="transcript">${transcriptHtml}</div>
+      ${res.hasAudio !== false ? `<div class="row" style="margin-top:10px"><button id="playSaved">녹음 다시 듣기</button></div><audio id="savedAudio" controls style="display:none"></audio>` : ''}
+    </div>
+
+    <div class="card">
+      <h3>개선 예시 답변</h3>
+      <div class="muted" style="margin-bottom:8px">내가 말한 사실만으로 다시 구성한 예시다. [ ] 부분은 내 경험으로 채운다.</div>
+      <div class="model">${esc(fb.model_answer)}</div>
+    </div>
+
+    ${trend.length >= 2 ? `<div class="card"><h3>${esc(q.qid)} 회차별 평균 점수</h3>${trendSvg(trend)}</div>` : ''}
+  `;
+
+  const pb = $('playSaved');
+  if (pb) pb.onclick = async () => {
+    const a = $('savedAudio');
+    pb.disabled = true; pb.textContent = '불러오는 중…';
+    try {
+      const d = await call('getAudio', AUTH, res.id);
+      a.src = `data:${d.mime};base64,${d.b64}`; a.style.display = ''; a.play(); pb.style.display = 'none';
+    } catch (e) { toast(e.message || e); pb.disabled = false; pb.textContent = '녹음 다시 듣기'; }
+  };
+  show('v-result');
+}
+
+function trendSvg(rows) {
+  const W = 640, H = 180, L = 36, R = 16, T = 16, B = 32;
+  const n = rows.length, x = i => L + (n === 1 ? 0 : i * (W - L - R) / (n - 1)), y = v => T + (5 - v) / 4 * (H - T - B);
+  const grid = [1, 2, 3, 4, 5].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e6e9ef"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#667085">${v}</text>`).join('');
+  const path = rows.map((r, i) => `${i ? 'L' : 'M'}${x(i)} ${y(r.avg)}`).join('');
+  const dots = rows.map((r, i) => `<circle cx="${x(i)}" cy="${y(r.avg)}" r="4.5" fill="#2f5fd0"/><text x="${x(i)}" y="${H - 10}" text-anchor="middle" font-size="11" fill="#667085">${r.round}회</text><text x="${x(i)}" y="${y(r.avg) - 10}" text-anchor="middle" font-size="11" fill="#1d2433">${r.avg.toFixed(1)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="회차별 평균 점수">${grid}<path d="${path}" fill="none" stroke="#2f5fd0" stroke-width="2"/>${dots}</svg>`;
+}
+
+$('resBack').onclick = $('resHome').onclick = () => { renderHome(); show('v-home'); };
+$('resAgain').onclick = () => openPractice(cur.q.qid, cur.mode);
+
+init();
+</script>
+</body>
+</html>
